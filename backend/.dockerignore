@@ -1,0 +1,9 @@
+# Don't copy these into the image (smaller, faster builds; no leaked secrets).
+.venv/
+__pycache__/
+*.pyc
+.env
+.ruff_cache/
+.pytest_cache/
+scratch.py
+try_openai.py

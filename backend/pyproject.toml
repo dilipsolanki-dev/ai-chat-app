@@ -1,0 +1,41 @@
+# pyproject.toml ≈ composer.json. It declares project metadata + dependencies.
+# `uv` reads this, resolves versions, and installs into a local .venv/ (≈ vendor/).
+#
+# Commands you'll use:
+#   uv sync                 -> create .venv + install everything below (like `composer install`)
+#   uv add <pkg>            -> add a dependency (like `composer require`)
+#   uv run <cmd>            -> run a command inside the .venv without manually activating it
+
+[project]
+name = "ai-chat-backend"
+version = "0.1.0"
+description = "Learning-project AI chat backend (FastAPI + OpenAI + Postgres)"
+requires-python = ">=3.12"
+
+# Runtime dependencies (installed always).
+dependencies = [
+    "fastapi>=0.115",          # the web framework (routes, validation, OpenAPI docs)
+    "uvicorn[standard]>=0.34",  # ASGI server that runs FastAPI (≈ `artisan serve`)
+    "pydantic-settings>=2.6",   # typed settings loaded from .env (≈ config() + .env)
+    "sqlalchemy[asyncio]>=2.0", # ORM (≈ Eloquent), async flavor
+    "asyncpg>=0.30",            # async PostgreSQL driver SQLAlchemy talks through
+    "alembic>=1.14",            # database migrations (≈ artisan migrate)
+    "openai>=1.59",             # official OpenAI SDK
+    "python-dotenv>=1.0",       # loads .env into the environment
+]
+
+# Dev-only dependencies (installed by `uv sync`, but you'd skip these in production).
+[dependency-groups]
+dev = [
+    "ruff>=0.8",    # linter + formatter (≈ Pint / php-cs-fixer + phpstan in one)
+    "httpx>=0.28",  # HTTP client used for testing endpoints
+]
+
+# Ruff config — keep it simple while learning.
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+# E,F = pycodestyle/pyflakes (basics); I = import sorting; UP = modern-Python upgrades.
+select = ["E", "F", "I", "UP"]

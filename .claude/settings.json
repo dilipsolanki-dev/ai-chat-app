@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "permissions": {
+    "allow": [
+      "Bash(uv *)",
+      "Bash(uvicorn *)",
+      "Bash(alembic *)",
+      "Bash(ruff *)",
+      "Bash(npm *)",
+      "Bash(npx *)",
+      "Bash(vite *)",
+      "Bash(psql *)",
+      "Bash(pg_isready *)",
+      "Bash(createdb *)",
+      "Bash(curl *)",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git add*)",
+      "Bash(git commit*)",
+      "Bash(git init*)"
+    ],
+    "deny": [
+      "Bash(git push*)",
+      "Bash(rm *)",
+      "Bash(docker system prune*)",
+      "Bash(docker volume prune*)"
+    ]
+  }
+}

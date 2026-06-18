@@ -1,0 +1,27 @@
+# ---- Python / backend ----
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.python-version
+
+# ---- Secrets / env ----
+.env
+.env.*
+!.env.example
+
+# ---- Node / frontend ----
+node_modules/
+frontend/dist/
+frontend/.vite/
+
+# ---- Editors / OS ----
+.vscode/
+.idea/
+.DS_Store
+*.log
+
+# ---- Docker ----
+# (compose volumes live in named volumes, not the repo)
