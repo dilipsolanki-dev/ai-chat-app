@@ -20,8 +20,23 @@ from openai import AsyncOpenAI
 
 from app.config import settings
 
-# One shared async client. Reads the key from settings (.env -> OPENAI_API_KEY).
-client = AsyncOpenAI(api_key=settings.openai_api_key)
+# Build the client LAZILY, not at import time.
+#
+# Why: the OpenAI SDK raises if you construct AsyncOpenAI() without a key. If we
+# did that at module level (`client = AsyncOpenAI(...)`), simply IMPORTING this
+# file would crash whenever no key is set — even in mock mode, where we never
+# call OpenAI at all. So instead we cache one client and only create it the first
+# time a real call needs it. (Think: a lazily-resolved singleton from the
+# service container, rather than one built eagerly on boot.)
+_client: AsyncOpenAI | None = None
+
+
+def get_client() -> AsyncOpenAI:
+    """Return a shared AsyncOpenAI client, constructing it on first use."""
+    global _client
+    if _client is None:
+        _client = AsyncOpenAI(api_key=settings.openai_api_key)
+    return _client
 
 # A "system" message steers the assistant's behavior. Prepend it to every request.
 SYSTEM_PROMPT = {
@@ -60,7 +75,7 @@ async def chat(messages: list[dict]) -> str:
     if settings.use_mock_ai:
         return _mock_reply(messages)
     _require_key()
-    response = await client.chat.completions.create(
+    response = await get_client().chat.completions.create(
         model=settings.openai_model,
         messages=[SYSTEM_PROMPT, *messages],  # *messages spreads the list (like JS ...)
     )
@@ -101,7 +116,7 @@ async def chat_stream(messages: list[dict]) -> AsyncIterator[str]:
     _require_key()
     # stream=True -> instead of one response, the SDK gives an async iterator
     # that produces many small "chunks" as the model generates text.
-    stream = await client.chat.completions.create(
+    stream = await get_client().chat.completions.create(
         model=settings.openai_model,
         messages=[SYSTEM_PROMPT, *messages],
         stream=True,

@@ -39,6 +39,14 @@ uv run ruff check . && uv run ruff format .
 # Frontend (run from frontend/)
 npm install
 npm run dev                               # -> :5173
+
+# Docker (run from repo root) — full stack in containers
+sudo docker compose up --build            # db + backend + frontend -> app at :5173, api at :8000
+sudo docker compose down                  # stop (add -v to also wipe the pgdata volume)
+sudo docker compose exec db psql -U ai_chat -d ai_chat -c "\dt"   # inspect the dockerized DB
+
+# Publish images to the registry (Docker Hub: dilipsolanki/ai-chat-*)
+sudo docker login && sudo docker compose build && sudo docker compose push
 ```
 
 ## Conventions
@@ -47,10 +55,19 @@ npm run dev                               # -> :5173
 - **DB:** async SQLAlchemy sessions provided via `Depends()`; never block the event loop.
 - **Format/lint:** `ruff` (run before committing).
 - **Default model:** `gpt-4o-mini` (cost-friendly for learning).
+- **No failing work at import time:** anything that can fail (constructing the OpenAI client,
+  opening connections, validating credentials) goes inside a function, not at module top level.
+  The OpenAI client is built lazily via `get_client()` in `openai_client.py` — otherwise simply
+  importing the module crashes when no key is set (e.g. mock mode in Docker).
 
 ## Secrets
 - Never commit `.env`. Secrets live there: `OPENAI_API_KEY`, `DATABASE_URL`.
 - `.env.example` documents required keys (no real values).
 
 ## Local services
-- Postgres runs locally on `:5432`. DB name: `ai_chat`. (Docker is added in the final phase.)
+- Postgres runs locally on `:5432`. DB name: `ai_chat`. (For containers, the backend reaches it
+  at host `db`, not `localhost` — see `docker-compose.yml`.)
+- **Docker is installed and the full stack runs** (`docker compose up --build`). App images are
+  published to Docker Hub as `dilipsolanki/ai-chat-backend` and `dilipsolanki/ai-chat-frontend`;
+  teammates `docker compose pull && docker compose up` with no source build. See README's
+  "Share with the team via a Docker registry" section.

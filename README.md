@@ -55,6 +55,51 @@ docker compose up --build      # db + backend + frontend
 docker compose down            # stop (add -v to wipe the DB volume)
 ```
 
+## Share with the team via a Docker registry
+
+Centralize the **built images** so teammates/servers *pull* them instead of rebuilding from source.
+Images are tagged `dilipsolanki/ai-chat-*` in [docker-compose.yml](docker-compose.yml) — change
+`dilipsolanki` to your Docker Hub username (or use `ghcr.io/<org>/...` for GitHub's registry).
+
+### You (publisher): build & push — once per release
+```bash
+docker login                       # Docker Hub  (or: docker login ghcr.io)
+docker compose build               # builds images AND tags them with the image: names
+docker compose push                # uploads backend + frontend images to the registry
+```
+
+### Teammate / server (consumer): pull & run — no source build needed
+They only need `docker-compose.yml` + a `.env`, then:
+```bash
+docker compose pull                # download the prebuilt images
+docker compose up                  # run the whole stack
+# open http://localhost:5173
+```
+
+**What is / isn't centralized:**
+- ✅ **Images** (the app, frozen with its deps) live in the registry — pushed & pulled.
+- ❌ **The `pgdata` volume** (your actual data) is NOT in the registry — it lives wherever the
+  `db` container runs. Images = the app; volumes = the data.
+- 🔑 **Secrets** (`OPENAI_API_KEY`) are never baked into images — they're passed at run time via
+  env / `.env`. Keep `USE_MOCK_AI=true` to run with no key.
+
+### Inspect the Dockerized database
+```bash
+docker compose exec db psql -U ai_chat -d ai_chat -c "\dt"                 # list tables
+docker compose exec db psql -U ai_chat -d ai_chat -c "SELECT * FROM conversations;"
+docker compose exec db psql -U ai_chat -d ai_chat                          # interactive (\q to quit)
+```
+
+### Everyday Docker commands
+```bash
+docker compose ps                  # what's running + health
+docker compose logs -f backend     # tail backend logs
+docker compose down                # stop (data SURVIVES in the pgdata volume)
+docker compose down -v             # stop AND wipe the DB volume (fresh start)
+docker compose up --build          # rebuild after code changes
+```
+> Drop the `sudo` permanently: `sudo usermod -aG docker $USER`, then log out/in.
+
 ## Laravel → Python cheat sheet
 
 | Laravel / PHP | Python / FastAPI |

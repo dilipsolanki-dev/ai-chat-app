@@ -24,6 +24,7 @@ services:
 
   backend:
     build: ./backend
+    image: dilipsolanki/ai-chat-backend:latest   # registry name: `compose build` tags it, `compose push` uploads it
     environment:
       # NOTE the host is "db", not localhost — that's the service name above.
       DATABASE_URL: postgresql+asyncpg://ai_chat:ai_chat@db:5432/ai_chat
@@ -37,6 +38,7 @@ services:
 
   frontend:
     build: ./frontend
+    image: dilipsolanki/ai-chat-frontend:latest   # registry name (see backend note)
     depends_on:
       - backend
     ports:
