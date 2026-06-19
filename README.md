@@ -94,9 +94,7 @@ docker compose exec db psql -U ai_chat -d ai_chat                          # int
 ```bash
 docker compose ps                  # what's running + health
 docker compose logs -f backend     # tail backend logs
-docker compose down                # stop (data SURVIVES in the pgdata volume)
 docker compose down -v             # stop AND wipe the DB volume (fresh start)
-docker compose up --build          # rebuild after code changes
 ```
 > Drop the `sudo` permanently: `sudo usermod -aG docker $USER`, then log out/in.
 
