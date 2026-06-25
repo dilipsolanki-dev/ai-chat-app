@@ -22,6 +22,8 @@ frontend/.vite/
 .idea/
 .DS_Store
 *.log
+# VSCode Local History — can contain .env snapshots with real secrets
+.history/
 
 # ---- Docker ----
 # (compose volumes live in named volumes, not the repo)

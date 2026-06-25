@@ -13,7 +13,7 @@ Browser ──HTTP/SSE──> FastAPI (uvicorn) ──> OpenAI API
 - **Frontend:** React (Vite + TypeScript)
 - **Backend:** FastAPI (Python 3.12), async SQLAlchemy, Alembic
 - **DB:** PostgreSQL
-- **LLM:** OpenAI API (`openai` SDK), default model `gpt-4o-mini`
+- **LLM:** any OpenAI-compatible API (`openai` SDK); default **Groq** (free), `llama-3.3-70b-versatile`
 - **Tooling:** `uv` (Python deps), `ruff` (lint/format), Docker (final phase)
 
 ## Quick start (local dev)
@@ -21,7 +21,7 @@ Browser ──HTTP/SSE──> FastAPI (uvicorn) ──> OpenAI API
 ```bash
 # 1. Backend
 cd backend
-cp .env.example .env          # fill in OPENAI_API_KEY + DATABASE_URL
+cp .env.example .env          # paste your Groq key (gsk_...) into OPENAI_API_KEY
 uv sync                        # install deps into .venv
 uv run alembic upgrade head    # create tables
 uv run uvicorn app.main:app --reload   # http://localhost:8000/docs
@@ -31,6 +31,20 @@ cd frontend
 npm install
 npm run dev                    # http://localhost:5173
 ```
+
+## Switch the LLM provider (Groq / OpenAI / Hugging Face)
+
+The app talks to the **OpenAI SDK**, but that SDK works with any **OpenAI-compatible** API.
+Switching providers is a **`.env` change only** — no code change. Three vars control it:
+
+| Provider | `OPENAI_BASE_URL` | `OPENAI_MODEL` | `OPENAI_API_KEY` |
+|---|---|---|---|
+| **Groq** (default, free) | `https://api.groq.com/openai/v1` | `llama-3.3-70b-versatile` | `gsk_...` ([console.groq.com](https://console.groq.com)) |
+| OpenAI | *(empty)* | `gpt-4o-mini` | `sk-...` |
+| Hugging Face | `https://router.huggingface.co/v1` | a model id | `hf_...` |
+
+Set `USE_MOCK_AI=true` to get canned replies with no key/cost (handy for UI work). The lazy
+`get_client()` in `backend/app/openai_client.py` passes `OPENAI_BASE_URL` straight to the SDK.
 
 ## Learning roadmap
 

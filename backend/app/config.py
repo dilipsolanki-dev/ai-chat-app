@@ -27,8 +27,13 @@ class Settings(BaseSettings):
     # Format: postgresql+asyncpg://<user>:<password>@<host>:<port>/<dbname>
     database_url: str = "postgresql+asyncpg://ai_chat:ai_chat@localhost:5432/ai_chat"
 
-    # OpenAI — wired up in Phase 5. Empty default keeps the app bootable for now.
+    # LLM provider (OpenAI-compatible). These three drive ANY provider that speaks
+    # the OpenAI API: real OpenAI, Groq, Hugging Face, etc. — you switch by changing
+    # .env only, no code change.
+    #   openai_base_url ""                              -> real OpenAI (the SDK's default)
+    #   openai_base_url "https://api.groq.com/openai/v1" -> Groq (free, what we use now)
     openai_api_key: str = ""
+    openai_base_url: str = ""
     openai_model: str = "gpt-4o-mini"
 
     # When True, the app fakes AI replies instead of calling OpenAI — so you can

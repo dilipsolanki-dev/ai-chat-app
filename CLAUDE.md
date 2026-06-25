@@ -54,7 +54,10 @@ sudo docker login && sudo docker compose build && sudo docker compose push
 - **I/O contracts:** every request/response body is a Pydantic model in `schemas.py`.
 - **DB:** async SQLAlchemy sessions provided via `Depends()`; never block the event loop.
 - **Format/lint:** `ruff` (run before committing).
-- **Default model:** `gpt-4o-mini` (cost-friendly for learning).
+- **LLM provider:** any OpenAI-compatible API via the `openai` SDK. Default = **Groq** (free),
+  model `llama-3.3-70b-versatile`, configured in `backend/.env` (`OPENAI_API_KEY` +
+  `OPENAI_BASE_URL=https://api.groq.com/openai/v1` + `OPENAI_MODEL`). Switch to real OpenAI
+  (empty `OPENAI_BASE_URL`) or Hugging Face by editing `.env` only — no code change.
 - **No failing work at import time:** anything that can fail (constructing the OpenAI client,
   opening connections, validating credentials) goes inside a function, not at module top level.
   The OpenAI client is built lazily via `get_client()` in `openai_client.py` — otherwise simply

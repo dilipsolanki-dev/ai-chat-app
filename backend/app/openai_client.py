@@ -1,7 +1,11 @@
 """
 Thin wrapper around the OpenAI SDK.
 
-Keeping all OpenAI calls in ONE module (instead of sprinkling them through your
+We use the `openai` SDK, but it talks to ANY OpenAI-compatible provider — real
+OpenAI, Groq, Hugging Face — by just pointing `base_url` at them. We currently
+use Groq (free). Switching providers is a .env change, not a code change.
+
+Keeping all LLM calls in ONE module (instead of sprinkling them through your
 routes) is the same instinct as a Laravel Service class: one place to change the
 model, handle errors, swap providers, etc.
 
@@ -35,7 +39,12 @@ def get_client() -> AsyncOpenAI:
     """Return a shared AsyncOpenAI client, constructing it on first use."""
     global _client
     if _client is None:
-        _client = AsyncOpenAI(api_key=settings.openai_api_key)
+        # base_url="" means "use the SDK default" (real OpenAI). Set it in .env to
+        # point at Groq/HF. `or None` converts the empty string to the SDK's default.
+        _client = AsyncOpenAI(
+            api_key=settings.openai_api_key,
+            base_url=settings.openai_base_url or None,
+        )
     return _client
 
 # A "system" message steers the assistant's behavior. Prepend it to every request.
@@ -61,11 +70,15 @@ def _mock_reply(messages: list[dict]) -> str:
     )
 
 
+_PLACEHOLDER_KEYS = {"", "sk-your-key-here", "gsk_your-groq-key-here"}
+
+
 def _require_key() -> None:
     """Fail fast with a clear message when real mode is on but no key is set."""
-    if not settings.openai_api_key or settings.openai_api_key == "sk-your-key-here":
+    if settings.openai_api_key in _PLACEHOLDER_KEYS:
         raise RuntimeError(
-            "OPENAI_API_KEY is missing. Set a real key in backend/.env, "
+            "No API key set. Put your provider key in backend/.env as OPENAI_API_KEY "
+            "(Groq keys start with 'gsk_', from https://console.groq.com), "
             "or keep USE_MOCK_AI=true to use fake replies."
         )
 

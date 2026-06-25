@@ -25,11 +25,17 @@ services:
   backend:
     build: ./backend
     image: dilipsolanki/ai-chat-backend:latest   # registry name: `compose build` tags it, `compose push` uploads it
+    # Load the LLM config (OPENAI_API_KEY / OPENAI_BASE_URL / OPENAI_MODEL / USE_MOCK_AI)
+    # straight from backend/.env — edit that one file and it works locally AND in Docker.
+    # required:false so the stack still boots (mock mode) if a teammate has no .env yet.
+    env_file:
+      - path: ./backend/.env
+        required: false
     environment:
-      # NOTE the host is "db", not localhost — that's the service name above.
+      # Override DATABASE_URL for the container: Postgres is at host "db" (the service
+      # name), NOT localhost. `environment:` WINS over `env_file:`, so the localhost URL
+      # inside backend/.env is correctly ignored here.
       DATABASE_URL: postgresql+asyncpg://ai_chat:ai_chat@db:5432/ai_chat
-      USE_MOCK_AI: "true"            # set "false" + provide a key to use real OpenAI
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-}   # picked up from your shell/.env if set
     depends_on:
       db:
         condition: service_healthy
