@@ -17,7 +17,7 @@ This is a teaching repo. When asked to implement backend/Python features:
 ## Stack & layout
 ```
 backend/   FastAPI (Python 3.12), async SQLAlchemy, Alembic, openai SDK
-frontend/  React (Vite + TypeScript)
+frontend/  React (Vite + TypeScript) — multi-conversation chat UI
 ```
 - `backend/app/main.py` — FastAPI app, CORS, router includes
 - `backend/app/config.py` — settings via `pydantic-settings` (reads `.env`)
@@ -25,7 +25,17 @@ frontend/  React (Vite + TypeScript)
 - `backend/app/models.py` — SQLAlchemy models (Conversation, Message)
 - `backend/app/schemas.py` — Pydantic request/response models
 - `backend/app/openai_client.py` — OpenAI wrapper (streaming + non-streaming)
-- `backend/app/routers/` — conversations.py, chat.py (SSE)
+- `backend/app/routers/` — conversations.py (create / list / **DELETE** / list-messages, all
+  404-guarded) and chat.py (SSE stream; **auto-titles** a conversation from its first message and
+  emits a `data: {"title": ...}` SSE frame so the sidebar updates live)
+- `frontend/src/api.ts` — typed client + SSE consumer `streamChat(id, msg, {onDelta,onTitle,onDone})`
+- `frontend/src/hooks/` — `useConversations` (list / active id / localStorage), `useChat` (messages /
+  streaming `send()`); `useChat` claims the active id via a ref so the load effect can't clobber an
+  in-flight stream
+- `frontend/src/components/` — Sidebar, ThreadList/ThreadItem, ChatHeader, MessageList, MessageItem
+  (assistant text rendered with `react-markdown` + `remark-gfm`), Composer, EmptyState, TypingIndicator
+- `frontend/nginx.conf` — prod SPA serving + `/api` proxy; `index.html` is `no-cache`, hashed
+  `/assets/*` are `immutable` (so a rebuilt image shows up on a normal reload)
 
 ## Commands
 ```bash
@@ -62,6 +72,20 @@ sudo docker login && sudo docker compose build && sudo docker compose push
   opening connections, validating credentials) goes inside a function, not at module top level.
   The OpenAI client is built lazily via `get_client()` in `openai_client.py` — otherwise simply
   importing the module crashes when no key is set (e.g. mock mode in Docker).
+
+## Permissions (enforced by `.claude/settings.json` + `.claude/hooks/guard.py`)
+This repo intentionally restricts what Claude may run — don't fight these, route around them:
+- **git is read-only:** `status` / `diff` / `log` / `show` / `branch` allowed; `commit` / `push` /
+  `add` / `reset` / `rebase` / `checkout` / `switch` / `merge` / … are **denied**. The user commits
+  and pushes manually — hand them the commit message rather than trying to commit.
+- **DB is read-only:** `psql` SELECTs and `-lqt` work; any write/DDL, `psql -f`, interactive psql, and
+  `dropdb` are **denied** by the `guard.py` PreToolUse hook (heuristic keyword match — it can also
+  false-positive on a read whose text contains a write keyword; just run such a query yourself).
+- **Network:** `curl`/`wget` only to localhost/127.0.0.1; external hosts are denied.
+- **Docker data:** `docker compose down -v`, `docker volume rm`, and prune are denied (protect pgdata).
+- **Secrets:** editing any `**/.env` is denied (reading is allowed).
+- **Dependency installs** (`npm install`, `uv add`, `pip install`) prompt before running.
+These constrain Claude only — not the user's own terminal, and not the app's normal runtime DB writes.
 
 ## Secrets
 - Never commit `.env`. Secrets live there: `OPENAI_API_KEY`, `DATABASE_URL`.

@@ -50,10 +50,10 @@ export default function Sidebar({
       />
 
       <div className="sidebar__foot">
-        <div className="avatar">DS</div>
+        <div className="avatar">D</div>
         <div>
           <div className="user-name">Dilip</div>
-          <div className="user-mail">dsolanki@westernalliancelogistics.com</div>
+          <div className="user-mail">dilip@example.com</div>
         </div>
       </div>
     </aside>

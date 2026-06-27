@@ -10,11 +10,18 @@ Browser ──HTTP/SSE──> FastAPI (uvicorn) ──> OpenAI API
 ```
 
 ## Stack
-- **Frontend:** React (Vite + TypeScript)
+- **Frontend:** React (Vite + TypeScript) — multi-conversation UI (sidebar, live-streaming replies,
+  markdown rendering, auto-titled chats)
 - **Backend:** FastAPI (Python 3.12), async SQLAlchemy, Alembic
 - **DB:** PostgreSQL
 - **LLM:** any OpenAI-compatible API (`openai` SDK); default **Groq** (free), `llama-3.3-70b-versatile`
-- **Tooling:** `uv` (Python deps), `ruff` (lint/format), Docker (final phase)
+- **Tooling:** `uv` (Python deps), `ruff` (lint/format), Docker (full stack)
+
+## Features
+- Multiple conversations with a sidebar — create, switch, and delete chats.
+- Live token-by-token streaming over SSE; assistant replies rendered as markdown.
+- Conversations auto-title from the first message; history persists across reloads.
+- Self-healing: a stale/deleted conversation id falls back to the newest chat (or a fresh one).
 
 ## Quick start (local dev)
 
