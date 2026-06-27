@@ -45,6 +45,23 @@ async def chat_endpoint(
 
     # 2. Persist the user's message.
     user_msg = Message(conversation_id=conversation_id, role="user", content=body.message)
+
+    # Auto-title: a brand-new conversation starts with the placeholder title
+    # "New conversation". On the first message, derive a title from that message
+    # (first 60 chars). We commit this on the REQUEST session (`db`) — not the
+    # post-stream SessionLocal() block — because `convo` was loaded on `db`, so
+    # SQLAlchemy already tracks it: the single db.commit() below flushes BOTH the
+    # new user_msg and this title change in one transaction. We also capture
+    # title_changed / new_title into plain locals NOW, because after the commit
+    # the ORM object may be expired/refreshed, and the streaming generator below
+    # runs later on a different session and must not touch `convo`.
+    title_changed = False
+    new_title = convo.title
+    if convo.title == "New conversation":
+        convo.title = body.message[:60].strip() or "New conversation"
+        title_changed = True
+        new_title = convo.title
+
     db.add(user_msg)
     await db.commit()
 
@@ -59,6 +76,10 @@ async def chat_endpoint(
     # 4 + 5. Stream the reply out, then save it.
     async def event_generator() -> AsyncIterator[str]:
         collected: list[str] = []
+        # If we just set the title, push one SSE frame first so the client can
+        # update the sidebar live (before any reply tokens arrive).
+        if title_changed:
+            yield f"data: {json.dumps({'title': new_title})}\n\n"
         try:
             async for piece in chat_stream(history):
                 collected.append(piece)

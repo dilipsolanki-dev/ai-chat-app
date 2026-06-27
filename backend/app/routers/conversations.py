@@ -9,7 +9,7 @@ Async DB query pattern you'll see repeatedly:
     rows = result.scalars().all()     # .scalars() -> model objects, not raw rows
 """
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -53,9 +53,28 @@ async def list_conversations(db: AsyncSession = Depends(get_db)) -> list[Convers
 #
 @router.get("/{conversation_id}/messages", response_model=list[MessageOut])
 async def list_messages(conversation_id: int, db: AsyncSession = Depends(get_db)) -> list[Message]:
+    # Guard first: a missing (deleted/stale) id should 404, not silently return [].
+    # db.get() is a primary-key lookup (≈ Conversation::find($id) in Eloquent).
+    convo = await db.get(Conversation, conversation_id)
+    if convo is None:
+        raise HTTPException(status_code=404, detail="Conversation not found")
     result = await db.execute(
         select(Message)
         .where(Message.conversation_id == conversation_id)
         .order_by(Message.created_at)
     )
     return list(result.scalars().all())
+
+
+# ---- WORKED EXAMPLE 3: delete a conversation -------------------------------
+@router.delete("/{conversation_id}", status_code=204)
+async def delete_conversation(conversation_id: int, db: AsyncSession = Depends(get_db)) -> None:
+    # PK lookup, then 404 if it doesn't exist (≈ findOrFail in Laravel).
+    convo = await db.get(Conversation, conversation_id)
+    if convo is None:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    await db.delete(convo)  # stage the DELETE
+    await db.commit()  # run it
+    # The child messages are removed automatically: the FK has ondelete="CASCADE"
+    # and the SQLAlchemy relationship is configured with cascade delete — no manual
+    # cleanup needed. status_code=204 means "No Content", so we return nothing (None).
