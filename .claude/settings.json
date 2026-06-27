@@ -9,22 +9,70 @@
       "Bash(npm *)",
       "Bash(npx *)",
       "Bash(vite *)",
-      "Bash(psql *)",
       "Bash(pg_isready *)",
       "Bash(createdb *)",
-      "Bash(curl *)",
+      "Bash(psql *)",
       "Bash(git status*)",
       "Bash(git diff*)",
       "Bash(git log*)",
-      "Bash(git add*)",
-      "Bash(git commit*)",
-      "Bash(git init*)"
+      "Bash(git show*)",
+      "Bash(git branch)",
+      "Bash(curl*localhost*)",
+      "Bash(curl*127.0.0.1*)"
+    ],
+    "ask": [
+      "Bash(npm install*)",
+      "Bash(npm i *)",
+      "Bash(npm ci*)",
+      "Bash(uv add*)",
+      "Bash(uv pip install*)",
+      "Bash(pip install*)"
     ],
     "deny": [
       "Bash(git push*)",
+      "Bash(git commit*)",
+      "Bash(git add*)",
+      "Bash(git reset*)",
+      "Bash(git rebase*)",
+      "Bash(git merge*)",
+      "Bash(git clean*)",
+      "Bash(git restore*)",
+      "Bash(git checkout*)",
+      "Bash(git stash*)",
+      "Bash(git cherry-pick*)",
+      "Bash(git revert*)",
+      "Bash(git tag*)",
+      "Bash(git mv*)",
+      "Bash(git rm*)",
+      "Bash(git apply*)",
+      "Bash(git am*)",
+      "Bash(git commit-tree*)",
       "Bash(rm *)",
+      "Bash(dropdb*)",
       "Bash(docker system prune*)",
-      "Bash(docker volume prune*)"
+      "Bash(docker volume prune*)",
+      "Bash(docker volume rm*)",
+      "Bash(docker compose down -v*)",
+      "Bash(docker compose down --volumes*)",
+      "Edit(**/.env)",
+      "Write(**/.env)",
+      "Edit(backend/.env)",
+      "Write(backend/.env)",
+      "Edit(.env)",
+      "Write(.env)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard.py\""
+          }
+        ]
+      }
     ]
   }
 }
